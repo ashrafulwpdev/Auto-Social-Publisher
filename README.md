@@ -83,11 +83,7 @@ See how posts are automatically pinned to your Telegram channel:
 
 If you encounter any issues or have feature requests, please [open an issue on GitHub](https://github.com/ashrafulwpdev/auto-social-publisher/issues/new). We welcome feedback to continue improving the plugin.
 
----
 
-## License
-
-This project is licensed under the **GNU General Public License v2.0**. For more details, check the [LICENSE](LICENSE) file.
 
 ---
 
@@ -100,7 +96,7 @@ Developed and managed by **[TechSwiftSoft.com](https://techswiftsoft.com)**, spe
 
 ## Support Email
 
-For direct support, you can reach us at **support@techswiftsoft.com**. We aim to respond to all inquiries within 24-48 hours.
+For direct support, [Email us](mailto:support@techswiftsoft.com). We aim to respond to all inquiries within 24-48 hours.
 
 
 ---
@@ -109,3 +105,8 @@ For direct support, you can reach us at **support@techswiftsoft.com**. We aim to
 
 **Version: 2.0.0**
 
+---
+
+## License
+
+This project is licensed under the **GNU General Public License v2.0**. For more details, check the [LICENSE](LICENSE) file.
