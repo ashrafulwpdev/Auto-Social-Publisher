@@ -1,5 +1,5 @@
 === Auto Social Publisher ===
-Contributors: your-username
+Contributors: ashrafulwpdev
 Tags: wordpress, telegram, auto-post
 Requires at least: 5.0
 Tested up to: 6.1
@@ -8,7 +8,7 @@ License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 == Description ==
-Auto Social Publisher is a WordPress plugin that automatically posts your new or updated posts to Telegram. Now with a premium dashboard and pinning feature!
+Auto Social Publisher automatically publishes new posts to Telegram with enhanced features. Developed and managed by **TechSwiftSoft** (https://techswiftsoft.com).
 
 == Installation ==
 1. Download the plugin.
@@ -16,5 +16,13 @@ Auto Social Publisher is a WordPress plugin that automatically posts your new or
 3. Activate the plugin.
 
 == Screenshots ==
-1. Premium Dashboard - Easily manage post settings and notifications.
-2. Telegram Post Pinning - Pin and unpin posts automatically on your Telegram channel.
+1. Premium Dashboard - Manage your post settings.
+2. Post Pinning - Pin and unpin posts automatically on Telegram.
+
+== Changelog ==
+= 2.0.0 =
+* Premium dashboard and post pinning features added.
+* Minor bug fixes.
+
+== Developed By ==
+This plugin is developed and maintained by **TechSwiftSoft** (https://techswiftsoft.com).
