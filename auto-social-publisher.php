@@ -1,83 +1,152 @@
 <?php
 /*
 Plugin Name: Auto Social Publisher
-Description: Automatically publishes new and updated posts to Telegram with enhanced features.
-Version: 1.0.5
-Author: TechSwiftsoft.com
+Description: Automatically publishes new posts to Telegram with enhanced features.
+Version: 2.0.0
+Author: MD ASHRAFUL ISLAM
+Author URI: https://ashrafulislam.me
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
+GitHub Plugin URI: https://github.com/ashrafulwpdev/Auto-Social-Publisher
+Company Name: TechSwiftSoft
+Company URL: https://techswiftsoft.com
+Support Email: support@techswiftsoft.com
 */
+
+
 
 // Exit if accessed directly.
 if (!defined('ABSPATH')) {
     exit;
 }
 
-// Hook into the post publish event.
-add_action('save_post', 'auto_social_publisher_send_telegram_post_notification', 10, 2);
+// Enqueue scripts and styles
+add_action('admin_enqueue_scripts', 'auto_social_publisher_enqueue_scripts');
 
-function auto_social_publisher_send_telegram_post_notification($post_id, $post) {
-    // Check if this is an AMP request and return early if so.
-    if (function_exists('is_amp_endpoint') && is_amp_endpoint()) {
+function auto_social_publisher_enqueue_scripts($hook_suffix) {
+    if ($hook_suffix == 'settings_page_auto-social-publisher-settings') {
+        // Enqueue Google Fonts Icons
+        wp_enqueue_style('google-fonts-icons', 'https://fonts.googleapis.com/icon?family=Material+Icons', array(), null);
+        // Enqueue plugin stylesheet
+        wp_enqueue_style('auto-social-publisher-style', plugins_url('auto-social-publisher.css', __FILE__), array('google-fonts-icons'), null);
+        // Enqueue plugin script with localization
+        wp_enqueue_script('auto-social-publisher-script', plugins_url('auto-social-publisher.js', __FILE__), array('jquery'), null, true);
+        wp_localize_script('auto-social-publisher-script', 'auto_social_publisher_ajax_object', array(
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce'    => wp_create_nonce('auto-social-publisher-nonce')
+        ));
+        // Specifically hide only the "Settings updated" message
+        wp_add_inline_style('auto-social-publisher-style', '#setting-error-settings_updated { display: none !important; }');
+    }
+}
+
+// Handle AJAX request to update the settings without reloading the page
+function save_auto_social_publisher_settings() {
+    // Check nonce for security
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'auto-social-publisher-nonce')) {
+        wp_send_json_error(array('message' => 'Nonce verification failed.'));
         return;
     }
 
-    // Check if posting to Telegram is enabled via admin settings.
+    // Save each setting if present
+    if (isset($_POST['enable_telegram_post'])) {
+        update_option('enable_telegram_post', sanitize_text_field($_POST['enable_telegram_post']));
+    } else {
+        update_option('enable_telegram_post', 'no'); // Save as 'no' if not set
+    }
+
+    if (isset($_POST['enable_telegram_pin'])) {
+        update_option('enable_telegram_pin', sanitize_text_field($_POST['enable_telegram_pin']));
+    } else {
+        update_option('enable_telegram_pin', 'no'); // Save as 'no' if not set
+    }
+
+    if (isset($_POST['wp_telegram_bot_token'])) {
+        update_option('wp_telegram_bot_token', sanitize_text_field($_POST['wp_telegram_bot_token']));
+    }
+
+    if (isset($_POST['wp_telegram_chat_id'])) {
+        update_option('wp_telegram_chat_id', sanitize_text_field($_POST['wp_telegram_chat_id']));
+    }
+
+    if (isset($_POST['wp_telegram_channel_username'])) {
+        update_option('wp_telegram_channel_username', sanitize_text_field($_POST['wp_telegram_channel_username']));
+    }
+
+    wp_send_json_success(array('message' => 'Settings saved successfully.'));
+}
+add_action('wp_ajax_save_auto_social_publisher_settings', 'save_auto_social_publisher_settings');
+
+
+
+// Handle AJAX request to get updated Telegram settings
+function get_updated_telegram_settings() {
+    // Check nonce for security
+    check_ajax_referer('auto-social-publisher-nonce', '_ajax_nonce');
+
+    // Get the updated settings
+    $enable_telegram_post = get_option('enable_telegram_post', 'yes');
+    $enable_telegram_pin = get_option('enable_telegram_pin', 'yes');
+
+    // Send a JSON response back to the JavaScript
+    wp_send_json_success(array(
+        'enable_telegram_post' => $enable_telegram_post === 'yes',
+        'enable_telegram_pin' => $enable_telegram_pin === 'yes',
+    ));
+}
+
+// Hook for AJAX action
+add_action('wp_ajax_update_telegram_settings', 'update_telegram_settings');
+add_action('wp_ajax_get_updated_telegram_settings', 'get_updated_telegram_settings');
+
+// Send post notification to Telegram on post publish
+add_action('publish_post', 'auto_social_publisher_send_telegram_post_notification');
+
+function auto_social_publisher_send_telegram_post_notification($post_id) {
+    // Check if Telegram posting is enabled
     $enable_telegram_post = get_option('enable_telegram_post', 'yes');
     if ($enable_telegram_post !== 'yes') {
-        return; // Stop execution if Telegram posting is disabled.
-    }
-
-    // Determine if this is an update or a new post.
-    $is_update = wp_is_post_revision($post_id);
-    $post_status = get_post_status($post_id);
-
-    // Get the last modified time of the post.
-    $last_modified = get_post_modified_time('U', true, $post_id);
-
-    // Get the timestamp when the last notification was sent (if any).
-    $last_sent_time = get_post_meta($post_id, '_telegram_last_sent_time', true);
-
-    // Check if the post is being updated and skip if the post hasn't been modified.
-    if ($is_update || ($last_sent_time && $last_modified <= $last_sent_time)) {
         return;
     }
 
-    // Get Telegram settings from options.
+    // Retrieve Telegram settings
     $telegram_bot_token = get_option('wp_telegram_bot_token');
     $telegram_chat_id = get_option('wp_telegram_chat_id');
     $telegram_channel_username = get_option('wp_telegram_channel_username');
 
+    // Validate Telegram settings
     if (empty($telegram_bot_token) || (empty($telegram_chat_id) && empty($telegram_channel_username))) {
         error_log('Telegram bot token, chat ID, or channel username is not set.');
         return;
     }
 
-    // Determine the chat ID based on the settings.
+    // Determine chat ID based on username or chat ID
     $chat_id = !empty($telegram_channel_username) ? '@' . $telegram_channel_username : $telegram_chat_id;
 
-    // Prepare post content.
+    // Fetch post details
+    $post = get_post($post_id);
+
+    // Validate post
+    if (!$post || $post->post_type !== 'post' || $post->post_status !== 'publish') {
+        return;
+    }
+
+    // Check if post has already been sent to Telegram
+    $telegram_sent = get_post_meta($post_id, '_telegram_sent', true);
+    if ($telegram_sent) {
+        return;
+    }
+
+    // Prepare message data
     $title = get_the_title($post_id);
     $link = get_permalink($post_id);
     $summary = wp_trim_words($post->post_content, 25, '');
-
-    // Determine the type of post (new or updated) and set the appropriate emoji and caption.
-    $caption = '';
-    if (!$is_update && $post_status === 'publish') {
-        $caption = "🆕 **New Post!**\n\n[" . $title . "](" . $link . ")\n\n" . $summary;
-    } elseif ($is_update && $post_status === 'publish') {
-        $caption = "🔄 **Updated Post!**\n\n[" . $title . "](" . $link . ")\n\n" . $summary;
-    } else {
-        return; // Skip if the post status is not publish (e.g., draft, private)
-    }
-
-    // Get the featured image.
+    $caption = "**New Post!**\n\n[$title]($link)\n\n$summary";
     $featured_image = get_the_post_thumbnail_url($post_id, 'full');
     if (!$featured_image) {
-        $featured_image = 'default_image_url'; // Optional: Set a default image URL if no featured image is found.
+        $featured_image = 'default_image_url';  // Replace with your default image URL
     }
 
-    // Prepare data for Telegram API.
     $data = array(
         'chat_id' => $chat_id,
         'photo' => $featured_image,
@@ -95,14 +164,13 @@ function auto_social_publisher_send_telegram_post_notification($post_id, $post) 
         ))
     );
 
-    // Telegram API endpoint URL.
+    // Telegram API endpoint for sending photo
     $url = 'https://api.telegram.org/bot' . $telegram_bot_token . '/sendPhoto';
-
-    // Send the message to Telegram.
     $response = wp_remote_post($url, array(
         'body' => $data
     ));
 
+    // Handle API response
     if (is_wp_error($response)) {
         error_log('Error sending message to Telegram: ' . $response->get_error_message());
     } else {
@@ -112,17 +180,19 @@ function auto_social_publisher_send_telegram_post_notification($post_id, $post) 
         if (!$response_data['ok']) {
             error_log('Telegram API error: ' . $response_data['description']);
         } else {
-            // Update the last sent time meta to the current time.
-            update_post_meta($post_id, '_telegram_last_sent_time', current_time('timestamp'));
             error_log('Message successfully sent to Telegram.');
+            update_post_meta($post_id, '_telegram_sent', true);
 
-            // Pin this post on Telegram channel.
-            auto_social_publisher_pin_post_on_telegram($telegram_bot_token, $chat_id, $response_data['result']['message_id']);
+            // Check if pinning posts on Telegram is enabled
+            $enable_telegram_pin = get_option('enable_telegram_pin', 'yes');
+            if ($enable_telegram_pin === 'yes') {
+                auto_social_publisher_pin_post_on_telegram($telegram_bot_token, $chat_id, $response_data['result']['message_id']);
+            }
         }
     }
 }
 
-// Function to pin a post on Telegram channel.
+// Function to pin a post on Telegram
 function auto_social_publisher_pin_post_on_telegram($bot_token, $chat_id, $message_id) {
     $url = 'https://api.telegram.org/bot' . $bot_token . '/pinChatMessage';
     $data = array(
@@ -145,16 +215,13 @@ function auto_social_publisher_pin_post_on_telegram($bot_token, $chat_id, $messa
             error_log('Telegram API error while pinning message: ' . $response_data['description']);
         } else {
             error_log('Message successfully pinned on Telegram.');
-
-            // Unpin the previously pinned post, if any.
             auto_social_publisher_unpin_previous_post_on_telegram($bot_token, $chat_id, $message_id);
         }
     }
 }
 
-// Function to unpin the previously pinned post on Telegram channel.
+// Function to unpin the previous post on Telegram
 function auto_social_publisher_unpin_previous_post_on_telegram($bot_token, $chat_id, $current_message_id) {
-    // Get the previously pinned message ID from post meta.
     $previous_message_id = get_option('auto_social_publisher_last_pinned_message_id');
 
     if (!empty($previous_message_id) && $previous_message_id != $current_message_id) {
@@ -182,11 +249,10 @@ function auto_social_publisher_unpin_previous_post_on_telegram($bot_token, $chat
         }
     }
 
-    // Update the last pinned message ID option with the current message ID.
     update_option('auto_social_publisher_last_pinned_message_id', $current_message_id);
 }
 
-// Add submenu page under Settings for Auto Social Publisher.
+// Add settings page
 add_action('admin_menu', 'auto_social_publisher_add_settings_page');
 
 function auto_social_publisher_add_settings_page() {
@@ -199,98 +265,240 @@ function auto_social_publisher_add_settings_page() {
     );
 }
 
+// Settings page markup
 function auto_social_publisher_settings_page() {
     ?>
-    <div class="wrap">
+    <div class="wrap auto-social-publisher-settings">
         <h1>Auto Social Publisher Settings</h1>
-        <form method="post" action="options.php">
+        <form id="auto-social-publisher-form" autocomplete="off">
             <?php
-            settings_fields('auto_social_publisher_settings');
-            do_settings_sections('auto_social_publisher_settings');
-            submit_button('Save Settings');
+            settings_fields('auto_social_publisher_options');
+            do_settings_sections('auto-social-publisher-settings');
+            submit_button('Update Settings');
             ?>
         </form>
+
+        <!-- Custom Popup for Settings Saved -->
+        <div class="custom-popup" id="customPopup" style="display:none;">
+            <span class="close-btn" id="closePopup">&times;</span>
+            <h3>Settings Updated</h3>
+            <p>Your settings have been successfully saved.</p>
+        </div>
+
+        <?php
+        // Display warning if Telegram posting is enabled but pinning is disabled
+        if (get_option('enable_telegram_post', 'yes') === 'yes' && get_option('enable_telegram_pin', 'yes') !== 'yes') :
+            ?>
+            <div class="notice notice-warning" id="telegram-warning">
+                <p><strong>Warning:</strong> Telegram posting is enabled, but pinning posts is disabled. Enable pinning to effectively manage pinned posts on Telegram.</p>
+            </div>
+        <?php endif; ?>
+        
+        <h2>Plugin Information</h2>
+        <table class="form-table plugin-info">
+            <tr valign="top">
+                <th scope="row">Developed by</th>
+                <td><a href="https://techswiftsoft.com" target="_blank">TechSwiftsoft</a></td>
+            </tr>
+            <tr valign="top">
+                <th scope="row">Support Email</th>
+                <td><a href="mailto:support@techswiftsoft.com">support@techswiftsoft.com</a></td>
+            </tr>
+        </table>
+
+        <div class="form-table footer-section">
+            <h2>Social Media Links</h2>
+            <ul class="social-links">
+                <li>
+                    <a href="https://www.facebook.com/Techswiftsoft" target="_blank">
+                        <span class="dashicons dashicons-facebook"></span>
+                        Facebook
+                    </a>
+                </li>
+                <li>
+                    <a href="https://x.com/Techswiftsoft" target="_blank">
+                        <span class="dashicons dashicons-twitter"></span>
+                        Twitter
+                    </a>
+                </li>
+                <li>
+                    <a href="https://github.com/ashrafulwpdev" target="_blank">
+                        <span class="dashicons dashicons-github-alt"></span>
+                        GitHub
+                    </a>
+                </li>
+                <li>
+                    <a href="https://techswiftsoft.com/" target="_blank">
+                        <span class="dashicons dashicons-admin-site"></span>
+                        Website
+                    </a>
+                </li>
+            </ul>
+        </div>
     </div>
     <?php
 }
 
-// Register settings and fields for the Auto Social Publisher Settings page.
-add_action('admin_init', 'auto_social_publisher_settings_init');
 
-function auto_social_publisher_settings_init() {
-    // Register settings.
-    register_setting('auto_social_publisher_settings', 'enable_telegram_post');
-    register_setting('auto_social_publisher_settings', 'wp_telegram_bot_token');
-    register_setting('auto_social_publisher_settings', 'wp_telegram_chat_id');
-    register_setting('auto_social_publisher_settings', 'wp_telegram_channel_username');
+// Register settings and settings sections
+function auto_social_publisher_admin_init() {
+    register_setting('auto_social_publisher_options', 'enable_telegram_post', 'sanitize_text_field');
+    register_setting('auto_social_publisher_options', 'enable_telegram_pin', 'sanitize_text_field');
+    register_setting('auto_social_publisher_options', 'wp_telegram_bot_token', 'sanitize_text_field');
+    register_setting('auto_social_publisher_options', 'wp_telegram_chat_id', 'sanitize_text_field');
+    register_setting('auto_social_publisher_options', 'wp_telegram_channel_username', 'sanitize_text_field');
 
-    // Add settings section.
     add_settings_section(
-        'auto_social_publisher_general_settings_section',
-        'General Settings',
-        'auto_social_publisher_general_settings_section_callback',
-        'auto_social_publisher_settings'
+        'auto_social_publisher_main',
+        'Telegram Settings',
+        'auto_social_publisher_section_text',
+        'auto-social-publisher-settings'
     );
 
-    // Add fields.
     add_settings_field(
         'enable_telegram_post',
-        'Enable Telegram Auto Post',
-        'enable_telegram_post_field_callback',
-        'auto_social_publisher_settings',
-        'auto_social_publisher_general_settings_section'
+        'Enable Telegram Post',
+        'auto_social_publisher_enable_telegram_post',
+        'auto-social-publisher-settings',
+        'auto_social_publisher_main'
+    );
+
+    add_settings_field(
+        'enable_telegram_pin',
+        'Enable Pinning Posts on Telegram',
+        'auto_social_publisher_enable_telegram_pin',
+        'auto-social-publisher-settings',
+        'auto_social_publisher_main'
     );
 
     add_settings_field(
         'wp_telegram_bot_token',
         'Telegram Bot Token',
-        'wp_telegram_bot_token_field_callback',
-        'auto_social_publisher_settings',
-        'auto_social_publisher_general_settings_section'
+        'auto_social_publisher_setting_string',
+        'auto-social-publisher-settings',
+        'auto_social_publisher_main'
     );
 
     add_settings_field(
         'wp_telegram_chat_id',
         'Telegram Chat ID',
-        'wp_telegram_chat_id_field_callback',
-        'auto_social_publisher_settings',
-        'auto_social_publisher_general_settings_section'
+        'auto_social_publisher_setting_chat_id',
+        'auto-social-publisher-settings',
+        'auto_social_publisher_main'
     );
 
     add_settings_field(
         'wp_telegram_channel_username',
         'Telegram Channel Username',
-        'wp_telegram_channel_username_field_callback',
-        'auto_social_publisher_settings',
-        'auto_social_publisher_general_settings_section'
+        'auto_social_publisher_setting_channel_username',
+        'auto-social-publisher-settings',
+        'auto_social_publisher_main'
     );
 }
+add_action('admin_init', 'auto_social_publisher_admin_init');
 
-// Callback functions for settings fields.
-function enable_telegram_post_field_callback() {
+// Settings section text
+function auto_social_publisher_section_text() {
+    echo '<p>Configure the settings for Auto Social Publisher.</p>';
+}
+
+// Checkbox for enabling Telegram post
+function auto_social_publisher_enable_telegram_post() {
     $enable_telegram_post = get_option('enable_telegram_post', 'yes');
-    echo '<input type="checkbox" id="enable_telegram_post" name="enable_telegram_post" value="yes" ' . checked('yes', $enable_telegram_post, false) . ' />';
-    echo '<label for="enable_telegram_post">Enable auto posting to Telegram</label>';
+    echo "<label class='toggle-switch'><input id='enable_telegram_post' name='enable_telegram_post' type='checkbox' value='yes'" . checked($enable_telegram_post, 'yes', false) . " /><span class='toggle-slider'></span></label>";
 }
 
-function wp_telegram_bot_token_field_callback() {
-    $token = get_option('wp_telegram_bot_token');
-    echo '<input type="text" id="wp_telegram_bot_token" name="wp_telegram_bot_token" value="' . esc_attr($token) . '" />';
-    echo '<p class="description">Enter your Telegram bot token here.</p>';
+// Checkbox for enabling Telegram post pinning
+function auto_social_publisher_enable_telegram_pin() {
+    $enable_telegram_pin = get_option('enable_telegram_pin', 'yes');
+    echo "<label class='toggle-switch'><input id='enable_telegram_pin' name='enable_telegram_pin' type='checkbox' value='yes'" . checked($enable_telegram_pin, 'yes', false) . " /><span class='toggle-slider'></span></label>";
 }
 
-function wp_telegram_chat_id_field_callback() {
+// Password input field for Telegram Bot Token with autocomplete disabled
+function auto_social_publisher_setting_string() {
+    $bot_token = get_option('wp_telegram_bot_token');
+    echo '
+    <div class="password-wrapper">
+    <input id="wp_telegram_bot_token" name="wp_telegram_bot_token" type="password" value="' . esc_attr($bot_token) . '" class="password-input" placeholder="Enter Bot Token" autocomplete="new-password" />
+    <span class="toggle-password">
+    <i class="dashicons dashicons-visibility" id="toggle-bot-token-icon"></i>
+    </span>
+    </div>
+    ';
+}
+
+// Password input field for Telegram Chat ID with autocomplete disabled
+function auto_social_publisher_setting_chat_id() {
     $chat_id = get_option('wp_telegram_chat_id');
-    echo '<input type="text" id="wp_telegram_chat_id" name="wp_telegram_chat_id" value="' . esc_attr($chat_id) . '" />';
-    echo '<p class="description">Enter your Telegram chat ID here.</p>';
+    echo '
+    <div class="password-wrapper">
+    <input id="wp_telegram_chat_id" name="wp_telegram_chat_id" type="password" value="' . esc_attr($chat_id) . '" class="password-input" placeholder="Enter Chat ID" autocomplete="off" />
+    <span class="toggle-password">
+    <i class="dashicons dashicons-visibility" id="toggle-chat-id-icon"></i>
+    </span>
+    </div>
+    ';
 }
 
-function wp_telegram_channel_username_field_callback() {
+// Password input field for Telegram Channel Username with autocomplete disabled
+function auto_social_publisher_setting_channel_username() {
     $channel_username = get_option('wp_telegram_channel_username');
-    echo '<input type="text" id="wp_telegram_channel_username" name="wp_telegram_channel_username" value="' . esc_attr($channel_username) . '" />';
-    echo '<p class="description">Enter your Telegram channel username (without @) here.</p>';
+    echo '
+    <div class="password-wrapper">
+    <input id="wp_telegram_channel_username" name="wp_telegram_channel_username" type="password" value="' . esc_attr($channel_username) . '" class="password-input" placeholder="Enter Channel Username" autocomplete="off" />
+    <span class="toggle-password">
+    <i class="dashicons dashicons-visibility" id="toggle-channel-username-icon"></i>
+    </span>
+    </div>
+    ';
 }
 
-function auto_social_publisher_general_settings_section_callback() {
-    echo '<p>Configure settings for the Auto Social Publisher plugin.</p>';
+// Add settings link on plugin page
+add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'auto_social_publisher_settings_link');
+
+function auto_social_publisher_settings_link($links) {
+    $settings_link = '<a href="options-general.php?page=auto-social-publisher-settings">' . __('Settings') . '</a>';
+    array_unshift($links, $settings_link);
+    return $links;
 }
+
+// Clear cache on plugin activation
+register_activation_hook(__FILE__, 'auto_social_publisher_clear_cache_on_activation');
+
+function auto_social_publisher_clear_cache_on_activation() {
+    // Clear WordPress cache if available
+    if (function_exists('wp_cache_clear_cache')) {
+        wp_cache_clear_cache();
+    }
+}
+
+// Clear cache on plugin deactivation
+register_deactivation_hook(__FILE__, 'auto_social_publisher_clear_cache_on_deactivation');
+
+function auto_social_publisher_clear_cache_on_deactivation() {
+    // Clear WordPress cache if available
+    if (function_exists('wp_cache_clear_cache')) {
+        wp_cache_clear_cache();
+    }
+}
+
+
+// Add custom information (Author, Company, Support Email) to the plugin row meta
+add_filter('plugin_row_meta', 'add_custom_plugin_details', 10, 2);
+
+function add_custom_plugin_details($links, $file) {
+    // Check if we're displaying information for the correct plugin
+    if (strpos($file, 'auto-social-publisher') !== false) {
+        // Add author details, company name, and support email
+        $new_links = array(
+            'Github' => '<a href="https://github.com/ashrafulwpdev/Auto-Social-Publisher" target="_blank">Github</a>',
+            'Company' => '<a href="https://techswiftsoft.com" target="_blank">TechSwiftSoft</a>',
+            'Support' => '<a href="mailto:support@techswiftsoft.com">Support</a>',
+        );
+        // Merge the new links with the existing ones
+        $links = array_merge($links, $new_links);
+    }
+    return $links;
+}
+
+

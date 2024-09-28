@@ -1,0 +1,421 @@
+/* General Styles for .wrap.auto-social-publisher-settings */
+.wrap.auto-social-publisher-settings {
+    max-width: 900px;
+    margin: 20px auto;
+    background-color: #f9f9f9; /* Light grey background */
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+}
+
+/* Heading Styles */
+.wrap.auto-social-publisher-settings h1 {
+    font-size: 32px; /* Larger heading */
+    margin-bottom: 20px;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+    color: #333; /* Dark text color */
+    font-family: 'Arial', sans-serif; /* Clean font */
+}
+
+/* Styles for Form Table */
+.form-table td {
+    padding: 15px 0;
+    color: #333; /* Dark text color */
+    font-size: 16px;
+    font-family: 'Arial', sans-serif; /* Consistent clean font */
+}
+
+.form-table td.label {
+    font-weight: bold;
+    background-color: #f5f5f5; /* Light grey background for labels */
+    padding: 10px;
+    border-bottom: 1px solid #eee; /* Subtle separation between rows */
+}
+
+.form-table td.value {
+    padding: 10px;
+}
+
+/* Toggle Switch Styles */
+.toggle-switch {
+    display: inline-block;
+    position: relative;
+    width: 48px;
+    height: 24px;
+    margin: 0;
+    vertical-align: middle; /* Ensures alignment */
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+/* When the input is checked (active state), add the .active class */
+.toggle-slider.active {
+    background-color: #4CAF50;
+}
+
+.toggle-slider.active:before {
+    transform: translateX(24px);
+}
+
+/* Warning Notice Styles */
+.notice-warning {
+    margin-bottom: 20px;
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+    color: #856404;
+    position: relative;
+    padding: .75rem 1.25rem;
+    border: 1px solid transparent;
+    border-radius: .25rem;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1); /* Soft shadow for warning */
+}
+
+/* Social Links Section Styles */
+.auto-social-publisher-settings .social-links {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    margin-top: 20px;
+}
+
+.auto-social-publisher-settings .social-links li {
+    display: inline-block;
+    margin-right: 30px;
+}
+
+.auto-social-publisher-settings .social-links a {
+    text-decoration: none;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    color: #333;
+    transition: color 0.3s; /* Smooth color transition */
+}
+
+.auto-social-publisher-settings .social-links a:hover {
+    color: #0073e6; /* Change color on hover */
+}
+
+/* Dashicons Styles */
+.auto-social-publisher-settings .social-links a .dashicons {
+    font-family: 'dashicons';
+    speak: none;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Plugin Information Section Styles */
+.plugin-info {
+    margin-top: 40px;
+    padding-top: 20px;
+    color: #333;
+    font-family: 'Arial', sans-serif;
+}
+
+.plugin-info table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.plugin-info td.label {
+    padding: 12px 0;
+    font-size: 14px;
+    font-weight: bold;
+    width: 30%;
+    background-color: #f5f5f5;
+    border-bottom: 1px solid #eee; /* Subtle separation between rows */
+}
+
+.plugin-info td.value {
+    padding: 12px 0;
+    font-size: 14px;
+    color: #555;
+}
+
+/* Email Links Styling */
+.auto-social-publisher-settings a[href^="mailto:"],
+.auto-social-publisher-settings a[href^="http"]:not(.social-links a) {
+    text-decoration: none;
+    color: #333;
+    transition: color 0.3s; /* Smooth color transition */
+}
+
+.auto-social-publisher-settings a[href^="mailto:"]:hover,
+.auto-social-publisher-settings a[href^="http"]:not(.social-links a):hover {
+    color: #0073e6; /* Change color on hover */
+}
+
+/* Dashicons CSS */
+@font-face {
+    font-family: 'dashicons';
+    src: url('https://s.w.org/wp-includes/fonts/dashicons.eot');
+    src: url('https://s.w.org/wp-includes/fonts/dashicons.eot?#iefix') format('embedded-opentype'),
+         url('https://s.w.org/wp-includes/fonts/dashicons.woff') format('woff'),
+         url('https://s.w.org/wp-includes/fonts/dashicons.ttf') format('truetype'),
+         url('https://s.w.org/wp-includes/fonts/dashicons.svg#dashicons') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Additional Dashicons Styles */
+.dashicons {
+    font-family: 'dashicons';
+    speak: none;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Responsive Styling */
+
+/* Responsive for tablets and small devices */
+@media (max-width: 1024px) {
+    .wrap.auto-social-publisher-settings {
+        padding: 15px;
+    }
+
+    .form-table td {
+        padding: 10px 5px;
+        font-size: 15px;
+    }
+
+    .wrap.auto-social-publisher-settings h1 {
+        font-size: 28px;
+        margin-bottom: 15px;
+    }
+
+    .plugin-info table,
+    .form-table {
+        font-size: 14px;
+    }
+
+    .auto-social-publisher-settings .social-links li {
+        margin-right: 15px;
+    }
+}
+
+/* Responsive for mobile devices */
+@media (max-width: 768px) {
+    .wrap.auto-social-publisher-settings {
+        padding: 10px;
+    }
+
+    .form-table td {
+        padding: 8px 0;
+        font-size: 14px;
+    }
+
+    .wrap.auto-social-publisher-settings h1 {
+        font-size: 24px;
+        margin-bottom: 10px;
+    }
+
+    .plugin-info table,
+    .form-table {
+        font-size: 13px;
+    }
+
+    .auto-social-publisher-settings .social-links {
+        flex-direction: column;
+    }
+
+    .auto-social-publisher-settings .social-links li {
+        margin-bottom: 10px;
+        margin-right: 0;
+    }
+
+    .auto-social-publisher-settings .social-links li:last-child {
+        margin-bottom: 0;
+    }
+}
+
+/* Responsive for very small devices */
+@media (max-width: 480px) {
+    .wrap.auto-social-publisher-settings {
+        padding: 8px;
+    }
+
+    .form-table td {
+        padding: 6px 0;
+        font-size: 13px;
+    }
+
+    .wrap.auto-social-publisher-settings h1 {
+        font-size: 22px;
+        margin-bottom: 8px;
+    }
+
+    .plugin-info table,
+    .form-table {
+        font-size: 12px;
+    }
+
+    .auto-social-publisher-settings .social-links {
+        flex-direction: column;
+    }
+
+    .auto-social-publisher-settings .social-links li {
+        margin-bottom: 8px;
+    }
+
+    .plugin-info td.label,
+    .plugin-info td.value {
+        padding: 6px 0;
+        font-size: 12px;
+    }
+}
+
+/* Premium Custom Popup with Soft Pastel Background for Contrast */
+
+/* Main popup container */
+.custom-popup {
+    display: none; /* Hidden by default */
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    padding: 25px;
+    border-radius: 20px;
+    background: rgba(255, 230, 240, 0.9); /* Light pastel pink with transparency for contrast */
+    backdrop-filter: blur(15px) saturate(150%); /* Frosted glass effect */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+    border: 1px solid rgba(255, 200, 220, 0.3); /* Subtle inner border */
+    z-index: 1000; /* Keep it on top */
+    max-width: 350px; /* Reduced width */
+    width: 85%;
+    text-align: center;
+    transition: all 0.4s ease-in-out; /* Smooth transition for show/hide */
+    background-image: linear-gradient(135deg, rgba(255, 230, 240, 0.8), rgba(255, 245, 250, 0.6)); /* Soft pastel gradient */
+}
+
+/* Popup fade-in and fade-out */
+.custom-popup.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.custom-popup.hide {
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, -50%) scale(0.9);
+}
+
+/* Title */
+.custom-popup h3 {
+    font-size: 22px; /* Elegant font size */
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    color: #FF6F61; /* Warm pastel coral for contrast */
+    margin-bottom: 12px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* Very subtle text shadow */
+}
+
+/* Popup message */
+.custom-popup p {
+    font-size: 14px;
+    color: rgba(60, 60, 60, 0.8); /* Softer dark text for readability */
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+}
+
+/* Close button */
+.custom-popup .close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 18px;
+    cursor: pointer;
+    color: rgba(120, 120, 120, 0.6); /* Soft grey for the close button */
+    transition: color 0.3s ease;
+}
+
+.custom-popup .close-btn:hover {
+    color: #FF6F61; /* Pastel coral hover effect */
+}
+
+/* Premium button (optional) */
+.custom-popup button {
+    background: linear-gradient(90deg, #FFB6C1, #FF69B4); /* Soft pink gradient button */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 25px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    font-family: 'Poppins', sans-serif;
+    margin-top: 15px;
+}
+
+.custom-popup button:hover {
+    background: linear-gradient(90deg, #FF69B4, #FFB6C1); /* Reverse gradient on hover */
+    box-shadow: 0 4px 10px rgba(255, 160, 180, 0.4); /* Soft shadow on hover */
+}
+
+/* Update Settings Button Styles */
+button[type="submit"] {
+    background: linear-gradient(90deg, #4CAF50, #8BC34A); /* Green gradient button */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-family: 'Arial', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+}
+
+button[type="submit"]:hover {
+    background: linear-gradient(90deg, #388E3C, #689F38); /* Darker green gradient on hover */
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15); /* Slightly stronger shadow on hover */
+}
+
+button[type="submit"]:active {
+    background: linear-gradient(90deg, #2E7D32, #558B2F); /* Even darker green on active click */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Reduced shadow for click effect */
+    transform: scale(0.98); /* Slight scale down for click feedback */
+}
+
+button[type="submit"]:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(139, 195, 74, 0.4); /* Custom focus ring with green glow */
+}
